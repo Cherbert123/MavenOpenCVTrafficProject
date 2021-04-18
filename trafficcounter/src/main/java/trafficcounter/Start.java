@@ -3,6 +3,7 @@ package trafficcounter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
@@ -33,14 +34,16 @@ public class Start {
 
         // read an image to work with from disk 
         Mat input = Imgcodecs.imread(IMAGE_PATH);
-
+        helper.addImage(input);
         // perform image processing on this image 
         Mat processedImage = processImage(input);
-        Mat morphImage = morph(processedImage);
+      Mat processedImage2 = playWithHue(processedImage);
+        Mat morphImage = morph(processedImage2);
+     
         Mat contours = findContours(input, morphImage);
 
         // add the original and the processed image to the panel and show the window 
-        helper.addImage(input);
+       
         helper.addImage(contours);
         
         
@@ -57,16 +60,16 @@ public class Start {
     public static Mat processImage(Mat input) {
 
     	 Mat blur = new Mat();
-        Mat processed = new Mat();
-
+    	 
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *  This is your place to start.
          *  Do whatever you want with OpenCV here!
          *  For example: Convert colors to gray
          * * * * * * * * * * * * * * * * * * * * * * * * * * * */
         Imgproc.blur(input, blur, new Size(7, 7));
+        Mat processed = new Mat(blur.size(),blur.type());
         Imgproc.cvtColor(blur, processed, Imgproc.COLOR_BGR2HSV);
-
+        
         return processed;
     }
     
@@ -84,14 +87,16 @@ public class Start {
     	 Imgproc.dilate(mask, morphOutput, dilateElement);
     	 return morphOutput;
     }
+    
     public static Mat findContours(Mat frame , Mat maskedImage) {
     	// init
     	List<MatOfPoint> contours = new ArrayList<>();
     	Mat hierarchy = new Mat();
-    	Mat blackAndWhite = new Mat();
-    	Imgproc.cvtColor(maskedImage, blackAndWhite, Imgproc.COLOR_BGR2GRAY);
+ 
+    	//Imgproc.cvtColor(maskedImage, blackAndWhite, Imgproc.COLOR_BGR2GRAY);
     	// find contours
-    	Imgproc.findContours(blackAndWhite, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_TC89_L1);
+    	
+    	Imgproc.findContours(maskedImage, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
 
     	// if any contour exist...
     	if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
@@ -103,8 +108,23 @@ public class Start {
     	                Imgproc.drawContours(frame, contours, idx, new Scalar(0, 255, 255));
     	        }
     	}
-    	System.out.println(contours.get(0).dump());
+    	
     	return frame;
     }
     
+    public static Mat playWithHue(Mat image) {
+    	Mat mask = new Mat(image.size(), image.type());
+    	// get thresholding values from the UI
+    	// remember: H ranges 0-180, S and V range 0-255
+    	Scalar minValues = new Scalar(20, 80,
+    	20);
+    	Scalar maxValues = new Scalar(180, 255,
+    	255);
+
+
+
+    	// threshold HSV image to select tennis balls
+    	Core.inRange(image, minValues, maxValues, mask);
+    	return mask;
+    }
 }
