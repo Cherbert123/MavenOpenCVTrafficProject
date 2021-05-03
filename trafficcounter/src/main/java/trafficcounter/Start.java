@@ -1,14 +1,13 @@
 package trafficcounter;
 
-import java.util.*;
-
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
 
 /**
  * Created by tobias on 25.08.17.
@@ -16,7 +15,11 @@ import org.opencv.imgproc.Imgproc;
 public class Start {
 
     /* change this path to an image on your disk which you want to work with */
-    public static final String IMAGE_PATH = "src/main/java/trafficcounter/Traffic1.jpg";
+    public static final String IMAGE_PATH = "src/main/java/trafficcounter/Car2.jpg";
+    public static final String IMAGE_TEST1_PATH = "src/main/java/trafficcounter/CarTest1.jpeg";
+    public static final String IMAGE_TEST2_PATH = "src/main/java/trafficcounter/CarTest2.jpeg";
+    public static final String IMAGE_TEST3_PATH = "src/main/java/trafficcounter/CarTest3.jpeg";
+    public static final String CASCADE_PATH = "src/test/resources/haar_cascades/haarcascade_car.xml";
 
     /* window size */
     public static final int WINDOW_HEIGHT = 800;
@@ -32,10 +35,10 @@ public class Start {
       //  Mat image = Mat.zeros( WINDOW_HEIGHT, WINDOW_WIDTH,  CV_8UC3 );
 
         // read an image to work with from disk 
-        Mat input = Imgcodecs.imread(IMAGE_PATH);
+        Mat input = Imgcodecs.imread(IMAGE_TEST3_PATH);
 
         // perform image processing on this image 
-        Mat processedImage = processImage(input);
+        Mat processedImage = processImageHaarCascade(input);
 
         // add the original and the processed image to the panel and show the window 
         helper.addImage(input);
@@ -54,66 +57,45 @@ public class Start {
      */
     public static Mat processImage(Mat input) {
 
-        Mat processed = new Mat();
-        Mat mask = new Mat();
-        Mat morphOutput = new Mat();
-        
-        /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
-         *  This is your place to start.
-         *  Do whatever you want with OpenCV here!
-         *  For example: Convert colors to gray
-         * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-        Imgproc.blur(input, processed, new Size(7, 7));
-        
-       // Imgproc.cvtColor(processed, processed, Imgproc.COLOR_BGR2HSV);
-         Imgproc.cvtColor(processed, processed, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.equalizeHist(processed, processed);
-
-        /*
-        Scalar minValues = new Scalar(20, 20, 20);
-        Scalar maxValues = new Scalar(120,120,120);
-        		
-        
-        Core.inRange(processed, minValues, maxValues, mask);
-        
-        
-        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(24, 24));
-        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
-
-        Imgproc.erode(mask, morphOutput, erodeElement);
-        Imgproc.erode(mask, morphOutput, erodeElement);
-
-        Imgproc.dilate(mask, morphOutput, dilateElement);
-        Imgproc.dilate(mask, morphOutput, dilateElement);
-
-        
-        processed = findContours(processed,morphOutput);*/
-        return processed;
-    }
+   	 Mat blur = new Mat();
+   	 
+       /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        *  This is your place to start.
+        *  Do whatever you want with OpenCV here!
+        *  For example: Convert colors to gray
+        * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+       Imgproc.blur(input, blur, new Size(7, 7));
+       Mat processed = new Mat(blur.size(),blur.type());
+       Imgproc.cvtColor(blur, processed, Imgproc.COLOR_BGR2HSV);
+       
+       return processed;
+   }
     
-    public static Mat findContours(Mat frame , Mat maskedImage) {
-    	// init
-    	List<MatOfPoint> contours = new ArrayList<>();
-    	Mat hierarchy = new Mat();
- 
-    	//Imgproc.cvtColor(maskedImage, blackAndWhite, Imgproc.COLOR_BGR2GRAY);
-    	// find contours
-    	
-    	Imgproc.findContours(maskedImage, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
+    /**
+     * returns an image with rectangles for each car it identifies
+     * @param input the image to process
+     * @return the processed image
+     */
+    
+    public static Mat processImageHaarCascade(Mat input) {
 
-    	// if any contour exist...
-    	if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
-    	{
-    	        // for each contour, display it in blue
-    			
-    	        for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
-    	        {
-    	                Imgproc.drawContours(frame, contours, idx, new Scalar(0, 255, 255));
-    	        }
-    	}
-    	
-    	return frame;
+        Mat processed = input.clone();        
+        
+//        Imgproc.cvtColor(input, processed, Imgproc.COLOR_BGR2HSV);
+
+        CascadeClassifier cascade = new CascadeClassifier(CASCADE_PATH);
+        
+        MatOfRect faces = new MatOfRect();
+        cascade.detectMultiScale(processed, faces);
+        
+        Rect[] facesArray = faces.toArray();
+        System.out.println(facesArray.length);
+        
+        for (Rect r :  facesArray) {
+        	Imgproc.rectangle(processed, r.tl(), r.br(), new Scalar(0, 0, 0, 255), 3);			
+		}
+              
+        return processed;
     }
     
 }

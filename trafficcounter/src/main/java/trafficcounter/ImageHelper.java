@@ -49,7 +49,6 @@ public class ImageHelper {
         JLabel label = new JLabel();
         label.setIcon(imageIcon);
 
-        panel.removeAll();
         panel.add(label);
         frame.setVisible(true);
 
