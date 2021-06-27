@@ -16,7 +16,7 @@ import org.opencv.imgproc.Imgproc;
 public class Start {
 
     /* change this path to an image on your disk which you want to work with */
-    public static final String IMAGE_PATH = "src/main/java/trafficcounter/Traffic1.jpg";
+    public static final String IMAGE_PATH = "src/main/java/trafficcounter/Traffic2.png";
 
     /* window size */
     public static final int WINDOW_HEIGHT = 800;
